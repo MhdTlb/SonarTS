@@ -14,3 +14,15 @@ function c(x: number[]) {
   if (x) return 1;
   //  ^ {{Change this condition so that it does not always evaluate to "true"; some subsequent code is never executed.}}
 }
+
+function f(x: null) {
+  if (x) return 1;
+}
+
+function g(x: undefined) {
+  if (x) return 1;
+}
+
+function i(x: void) {
+  if (x) return 1;
+}

@@ -68,10 +68,6 @@ class Walker extends tslint.ProgramAwareRuleWalker {
   }
 
   isAlwaysTruthy(type: ts.Type) {
-    return !(
-      isTypeFlagSet(type, ts.TypeFlags.Number) ||
-      isTypeFlagSet(type, ts.TypeFlags.String) ||
-      isTypeFlagSet(type, ts.TypeFlags.Boolean)
-    );
+    return !isTypeFlagSet(type, ts.TypeFlags.PossiblyFalsy);
   }
 }
