@@ -69,4 +69,38 @@ function n(x: any) {
   return x ? 1 : 2;
 }
 
+function optionals(x?: {}) {
+  if (x) return 1;
+}
+
+class Foo {
+  x: Foo;
+
+  public m() {
+    if (this.x) return 1;
+  }
+}
+
+function indexTypes(x: { [key: string]: {} }) {
+  if (x["foo"]) return 1;
+}
+
+function changeInCallback(arr: number[]) {
+  let flag = false;
+  arr.forEach(x => {
+    if (x > 3) flag = true;
+  });
+
+  if (!flag) return 1;
+}
+
+function dom() {
+  return (performance && performance.now) ? performance.now() : null
+}
+
+function nullable(x: {}) {
+  if (x) return 1;
+}
+nullable(null);
+
 export default 1;
