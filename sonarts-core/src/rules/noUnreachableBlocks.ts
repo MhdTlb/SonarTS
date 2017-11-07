@@ -20,6 +20,7 @@
 import * as tslint from "tslint";
 import * as ts from "typescript";
 import { SonarRuleMetaData } from "../sonarRule";
+import { isTypeFlagSet } from "tslint";
 
 export class Rule extends tslint.Rules.TypedRule {
   public static metadata: SonarRuleMetaData = {
@@ -67,7 +68,10 @@ class Walker extends tslint.ProgramAwareRuleWalker {
   }
 
   isAlwaysTruthy(type: ts.Type) {
-    const stringifiedType = this.getTypeChecker().typeToString(type);
-    return !["number", "string", "boolean"].includes(stringifiedType);
+    return !(
+      isTypeFlagSet(type, ts.TypeFlags.Number) ||
+      isTypeFlagSet(type, ts.TypeFlags.String) ||
+      isTypeFlagSet(type, ts.TypeFlags.Boolean)
+    );
   }
 }
