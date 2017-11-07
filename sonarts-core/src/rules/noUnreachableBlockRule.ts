@@ -25,7 +25,7 @@ const { isTypeFlagSet } = tslint;
 
 export class Rule extends tslint.Rules.TypedRule {
   public static metadata: SonarRuleMetaData = {
-    ruleName: "no-unreachable-blocks",
+    ruleName: "no-unreachable-block",
     description: "Conditionally executed blocks should be reachable",
     rationale: tslint.Utils.dedent`
       Conditional expressions which are always "true" or "false" can lead to dead code. Such code is always buggy and 
