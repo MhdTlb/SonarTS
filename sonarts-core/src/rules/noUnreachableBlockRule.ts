@@ -20,6 +20,7 @@
 import * as tslint from "tslint";
 import * as ts from "typescript";
 import { SonarRuleMetaData } from "../sonarRule";
+import getStrictProgram from "../utils/getStrictProgram";
 
 const { isTypeFlagSet } = tslint;
 
@@ -42,12 +43,11 @@ export class Rule extends tslint.Rules.TypedRule {
   }
 
   public applyWithProgram(sourceFile: ts.SourceFile, program: ts.Program): tslint.RuleFailure[] {
-    return this.applyWithWalker(new Walker(sourceFile, this.getOptions(), program));
+    return this.applyWithWalker(new Walker(sourceFile, this.getOptions(), getStrictProgram(program)));
   }
 }
 
 class Walker extends tslint.ProgramAwareRuleWalker {
-
   private readonly FALSY_VALUES = ['""', "false", "0"];
 
   protected visitIfStatement(ifStatement: ts.IfStatement) {
@@ -97,11 +97,10 @@ class Walker extends tslint.ProgramAwareRuleWalker {
       return type.types.every(this.isAlwaysFalsy);
     }
     if (this.isLiteralType(type)) {
-      ts.FlowFlags
       return this.FALSY_VALUES.includes(this.getTypeChecker().typeToString(type));
     }
     return isTypeFlagSet(type, ts.TypeFlags.Undefined | ts.TypeFlags.Null | ts.TypeFlags.Void);
-  }
+  };
 
   isAny(type: ts.Type) {
     return isTypeFlagSet(type, ts.TypeFlags.Any);
@@ -114,5 +113,4 @@ class Walker extends tslint.ProgramAwareRuleWalker {
   isLiteralType(type: ts.Type) {
     return isTypeFlagSet(type, ts.TypeFlags.Literal);
   }
-
 }
