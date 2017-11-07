@@ -46,12 +46,20 @@ export class Rule extends tslint.Rules.TypedRule {
 }
 
 class Walker extends tslint.ProgramAwareRuleWalker {
-  public visitIfStatement(ifStatement: ts.IfStatement) {
+  protected visitIfStatement(ifStatement: ts.IfStatement) {
     const result = this.evaluateExpression(ifStatement.expression);
     if (result !== undefined) {
       this.addFailureAtNode(ifStatement.expression, Rule.getMessage(String(result)));
     }
     super.visitIfStatement(ifStatement);
+  }
+
+  protected visitConditionalExpression(expression: ts.ConditionalExpression) {
+    const result = this.evaluateExpression(expression.condition);
+    if (result !== undefined) {
+      this.addFailureAtNode(expression.condition, Rule.getMessage(String(result)));
+    }
+    super.visitConditionalExpression(expression);
   }
 
   evaluateExpression(expression: ts.Expression): boolean | undefined {

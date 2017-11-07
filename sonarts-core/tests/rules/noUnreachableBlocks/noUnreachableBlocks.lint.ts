@@ -35,4 +35,13 @@ function k(x: number[] & null) {
   if (x) return 1;
 }
 
+function l(x: number[]) {
+  return x ? 1 : 2;
+  //     ^ {{Change this condition so that it does not always evaluate to "true"; some subsequent code is never executed.}}
+}
+
+function m(x: number) {
+  return x ? 1 : 2;
+}
+
 export default 1;
