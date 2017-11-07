@@ -68,7 +68,6 @@ class Walker extends tslint.ProgramAwareRuleWalker {
 
   evaluateExpression(condition: ts.Expression): boolean | undefined {
     const type = this.getTypeChecker().getTypeAtLocation(condition);
-    console.log(condition.getText() + " : " + this.getTypeChecker().typeToString(type));
     if (this.isAlwaysTruthy(type)) {
       return true;
     }
