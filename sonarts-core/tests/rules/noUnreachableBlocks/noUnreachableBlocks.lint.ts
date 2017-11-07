@@ -44,4 +44,8 @@ function m(x: number) {
   return x ? 1 : 2;
 }
 
+function n(x: any) {
+  return x ? 1 : 2;
+}
+
 export default 1;

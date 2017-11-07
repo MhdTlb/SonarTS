@@ -20,7 +20,8 @@
 import * as tslint from "tslint";
 import * as ts from "typescript";
 import { SonarRuleMetaData } from "../sonarRule";
-import { isTypeFlagSet } from "tslint";
+
+const { isTypeFlagSet } = tslint;
 
 export class Rule extends tslint.Rules.TypedRule {
   public static metadata: SonarRuleMetaData = {
@@ -80,8 +81,12 @@ class Walker extends tslint.ProgramAwareRuleWalker {
       return type.types.every(this.isAlwaysTruthy);
     }
 
-    return !isTypeFlagSet(type, ts.TypeFlags.PossiblyFalsy);
+    return !this.isAny(type) && !isTypeFlagSet(type, ts.TypeFlags.PossiblyFalsy);
   };
+
+  isAny(type: ts.Type) {
+    return isTypeFlagSet(type, ts.TypeFlags.Any);
+  }
 
   isUnionOrIntersectionType(type: ts.Type): type is ts.UnionType {
     return isTypeFlagSet(type, ts.TypeFlags.UnionOrIntersection);
