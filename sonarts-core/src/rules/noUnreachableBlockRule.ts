@@ -43,9 +43,7 @@ export class Rule extends tslint.Rules.TypedRule {
   }
 
   public applyWithProgram(sourceFile: ts.SourceFile, program: ts.Program): tslint.RuleFailure[] {
-    const strictProgram = getStrictProgram(program);
-    const strictSourceFile = strictProgram.getSourceFile(sourceFile.fileName);
-    return this.applyWithWalker(new Walker(strictSourceFile, this.getOptions(), strictProgram));
+    return this.applyWithWalker(new Walker(sourceFile, this.getOptions(), getStrictProgram(program)));
   }
 }
 

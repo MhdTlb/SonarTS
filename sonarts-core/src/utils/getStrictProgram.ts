@@ -17,17 +17,16 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-import { Program, CompilerOptions, createProgram, createCompilerHost } from "typescript";
+import { Program, CompilerOptions, createProgram } from "typescript";
 
 let strictProgram: Program;
-let oldCompilerOptions: CompilerOptions;
 
 export default function getStrictProgram(oldProgram: Program) {
   const compilerOptions = oldProgram.getCompilerOptions();
   if (isStrict(compilerOptions)) {
     return oldProgram;
   }
-  if (!strictProgram || JSON.stringify(compilerOptions) !== JSON.stringify(oldCompilerOptions)) {
+  if (!strictProgram) {
     strictProgram = makeStrict(oldProgram);
   }
   return strictProgram;
@@ -38,8 +37,9 @@ function isStrict(compilerOptions: CompilerOptions) {
 }
 
 function makeStrict(oldProgram: Program) {
-  oldCompilerOptions = oldProgram.getCompilerOptions();
-  const strictCompilerOptions = { ...oldCompilerOptions, strict: true };
-  const host = createCompilerHost(strictCompilerOptions, true);
-  return createProgram(oldProgram.getRootFileNames(), strictCompilerOptions, host);
+  const strictCompilerOptions = {
+    ...oldProgram.getCompilerOptions(),
+    strict: true,
+  };
+  return createProgram(oldProgram.getRootFileNames(), strictCompilerOptions, undefined, oldProgram);
 }
