@@ -38,7 +38,7 @@ export class Rule extends tslint.Rules.TypedRule {
   };
 
   public static getMessage(value: string) {
-    return `Change this condition so that it does not always evaluate to "${value}"; some subsequent code is never executed.`;
+    return `This condition always evaluates to "${value}".`;
   }
 
   public applyWithProgram(sourceFile: ts.SourceFile, program: ts.Program): tslint.RuleFailure[] {
@@ -47,6 +47,9 @@ export class Rule extends tslint.Rules.TypedRule {
 }
 
 class Walker extends tslint.ProgramAwareRuleWalker {
+
+  private readonly FALSY_VALUES = ['""', "false", "0"];
+
   protected visitIfStatement(ifStatement: ts.IfStatement) {
     const result = this.evaluateExpression(ifStatement.expression);
     if (result !== undefined) {
@@ -63,10 +66,14 @@ class Walker extends tslint.ProgramAwareRuleWalker {
     super.visitConditionalExpression(expression);
   }
 
-  evaluateExpression(expression: ts.Expression): boolean | undefined {
-    const type = this.getTypeChecker().getTypeAtLocation(expression);
+  evaluateExpression(condition: ts.Expression): boolean | undefined {
+    const type = this.getTypeChecker().getTypeAtLocation(condition);
+    console.log(condition.getText() + " : " + this.getTypeChecker().typeToString(type));
     if (this.isAlwaysTruthy(type)) {
       return true;
+    }
+    if (this.isAlwaysFalsy(type)) {
+      return false;
     }
 
     return undefined;
@@ -80,9 +87,22 @@ class Walker extends tslint.ProgramAwareRuleWalker {
     if (this.isUnionOrIntersectionType(type)) {
       return type.types.every(this.isAlwaysTruthy);
     }
-
+    if (this.isLiteralType(type)) {
+      return this.getTypeChecker().typeToString(type) === "true";
+    }
     return !this.isAny(type) && !isTypeFlagSet(type, ts.TypeFlags.PossiblyFalsy);
   };
+
+  isAlwaysFalsy = (type: ts.Type): boolean => {
+    if (this.isUnionOrIntersectionType(type)) {
+      return type.types.every(this.isAlwaysFalsy);
+    }
+    if (this.isLiteralType(type)) {
+      ts.FlowFlags
+      return this.FALSY_VALUES.includes(this.getTypeChecker().typeToString(type));
+    }
+    return isTypeFlagSet(type, ts.TypeFlags.Undefined | ts.TypeFlags.Null | ts.TypeFlags.Void);
+  }
 
   isAny(type: ts.Type) {
     return isTypeFlagSet(type, ts.TypeFlags.Any);
@@ -91,4 +111,9 @@ class Walker extends tslint.ProgramAwareRuleWalker {
   isUnionOrIntersectionType(type: ts.Type): type is ts.UnionType {
     return isTypeFlagSet(type, ts.TypeFlags.UnionOrIntersection);
   }
+
+  isLiteralType(type: ts.Type) {
+    return isTypeFlagSet(type, ts.TypeFlags.Literal);
+  }
+
 }
