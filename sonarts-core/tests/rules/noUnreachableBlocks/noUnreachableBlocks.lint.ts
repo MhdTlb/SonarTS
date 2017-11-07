@@ -26,3 +26,13 @@ function g(x: undefined) {
 function i(x: void) {
   if (x) return 1;
 }
+
+function j(x: number[] | null) {
+  if (x) return 1;
+}
+
+function k(x: number[] & null) {
+  if (x) return 1;
+}
+
+export default 1;

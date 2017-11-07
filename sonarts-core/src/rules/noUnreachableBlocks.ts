@@ -67,7 +67,15 @@ class Walker extends tslint.ProgramAwareRuleWalker {
     return expression.kind === ts.SyntaxKind.Identifier;
   }
 
-  isAlwaysTruthy(type: ts.Type) {
+  isAlwaysTruthy = (type: ts.Type): boolean => {
+    if (this.isUnionOrIntersectionType(type)) {
+      return type.types.every(this.isAlwaysTruthy);
+    }
+
     return !isTypeFlagSet(type, ts.TypeFlags.PossiblyFalsy);
+  };
+
+  isUnionOrIntersectionType(type: ts.Type): type is ts.UnionType {
+    return isTypeFlagSet(type, ts.TypeFlags.UnionOrIntersection);
   }
 }
