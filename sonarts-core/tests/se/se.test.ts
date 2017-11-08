@@ -25,17 +25,26 @@ import { SymbolicExecution, SECallback, ProgramState, LiteralSymbolicValue } fro
 import { identifier } from "babel-types";
 import { join } from "path";
 
-it("creates literal symbolic value", () => {
-  expect.assertions(1);
-  run(`let x = 0; _inspect(x);`, (node, programState, inspectedSymbols) => {
-    expect(programState.sv(inspectedSymbols.get("x"))).toEqual({ type: "literal", value: "0" });
+describe("Variable Declaration", () => {
+  it("creates unknown symbolic value", () => {
+    expect.assertions(1);
+    run(`let x = foo(); _inspect(x);`, (node, programState, inspectedSymbols) => {
+      expect(programState.sv(inspectedSymbols.get("x"))).toEqual({ type: "unknown" });
+    });
   });
-});
 
-it("creates unknown symbolic value", () => {
-  expect.assertions(1);
-  run(`let x = foo(); _inspect(x);`, (node, programState, inspectedSymbols) => {
-    expect(programState.sv(inspectedSymbols.get("x"))).toEqual({ type: "unknown" });
+  it("creates literal symbolic value", () => {
+    expect.assertions(1);
+    run(`let x = 0; _inspect(x);`, (node, programState, inspectedSymbols) => {
+      expect(programState.sv(inspectedSymbols.get("x"))).toEqual({ type: "literal", value: "0" });
+    });
+  });
+
+  it("assigns already known symbolic value", () => {
+    expect.assertions(1);
+    run(`let x = foo(); let y = x; _inspect(x, y);`, (node, programState, inspectedSymbols) => {
+      expect(programState.sv(inspectedSymbols.get("x"))).toBe(programState.sv(inspectedSymbols.get("y")));
+    });
   });
 });
 

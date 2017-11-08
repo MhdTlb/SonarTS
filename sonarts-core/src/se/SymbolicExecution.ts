@@ -42,17 +42,26 @@ export class SymbolicExecution {
   };
 
   private readonly executeProgramNode = (element: ts.Node, currentState: ProgramState): ProgramState => {
+    const { getSymbolAtLocation } = this.program.getTypeChecker();
+
     if (tsutils.isVariableDeclaration(element)) {
-      const symbol = this.program.getTypeChecker().getSymbolAtLocation(element.name);
+      const symbol = getSymbolAtLocation(element.name);
 
       if (element.initializer !== undefined && tsutils.isNumericLiteral(element.initializer)) {
         const sv = createLiteralSymbolicValue(element.initializer.text);
         return currentState.setSV(symbol, sv);
       }
 
+      if (element.initializer !== undefined && tsutils.isIdentifier(element.initializer)) {
+        const initializerSymbol = getSymbolAtLocation(element.initializer);
+        const sv = currentState.sv(initializerSymbol);
+        return sv ? currentState.setSV(symbol, sv) : currentState;
+      }
+
       const sv = createUnknownSymbolicValue();
       return currentState.setSV(symbol, sv);
     }
+
     return currentState;
   };
 }
