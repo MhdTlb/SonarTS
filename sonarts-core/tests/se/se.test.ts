@@ -25,18 +25,22 @@ import { SymbolicExecution, SECallback, ProgramState, LiteralSymbolicValue } fro
 import { identifier } from "babel-types";
 import { join } from "path";
 
-const filename = join(__dirname, "fixtures/se.lint.ts");
-
 it("creates literal symbolic value", () => {
   expect.assertions(1);
-  run((node, programState, inspectedSymbols) => {
+  run(`let x = 0; _inspect(x);`, (node, programState, inspectedSymbols) => {
     expect(programState.sv(inspectedSymbols.get("x"))).toEqual({ type: "literal", value: "0" });
   });
 });
 
-function run(callback: SETestCallback) {
-  const program = createProgram();
-  const sourceFile = program.getSourceFile(filename);
+function run(source: string, callback: SETestCallback) {
+  const filename = "filename.ts";
+  const host: ts.CompilerHost = {
+    ...ts.createCompilerHost({ strict: true }),
+    getSourceFile: () => ts.createSourceFile(filename, source, ts.ScriptTarget.Latest),
+    getCanonicalFileName: () => filename,
+  };
+  const program = ts.createProgram([], { strict: true }, host);
+  const sourceFile = program.getSourceFiles()[0];
 
   const se = new SymbolicExecution(sourceFile.statements, program);
 
@@ -46,10 +50,6 @@ function run(callback: SETestCallback) {
       callback(node, programState, map);
     }
   });
-}
-
-function createProgram(scriptKind: ts.ScriptKind = ts.ScriptKind.TSX) {
-  return ts.createProgram([filename], { strict: true });
 }
 
 function isInspectNode(node: ts.Node, program: ts.Program): Map<string, ts.Symbol> | undefined {
