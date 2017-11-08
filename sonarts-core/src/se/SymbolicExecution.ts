@@ -62,6 +62,18 @@ export class SymbolicExecution {
       return currentState.setSV(symbol, sv);
     }
 
+    if (
+      tsutils.isBinaryExpression(element) &&
+      element.operatorToken.kind === ts.SyntaxKind.EqualsToken &&
+      tsutils.isIdentifier(element.left) &&
+      tsutils.isIdentifier(element.right)
+    ) {
+      const leftSymbol = getSymbolAtLocation(element.left);
+      const rightSymbol = getSymbolAtLocation(element.right);
+      const rightSV = currentState.sv(rightSymbol);
+      return rightSV ? currentState.setSV(leftSymbol, rightSV) : currentState;
+    }
+
     return currentState;
   };
 }

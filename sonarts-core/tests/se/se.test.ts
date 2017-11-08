@@ -40,9 +40,18 @@ describe("Variable Declaration", () => {
     });
   });
 
-  it("assigns already known symbolic value", () => {
+  it("initializes with already known symbolic value", () => {
     expect.assertions(1);
     run(`let x = foo(); let y = x; _inspect(x, y);`, (node, programState, inspectedSymbols) => {
+      expect(programState.sv(inspectedSymbols.get("x"))).toBe(programState.sv(inspectedSymbols.get("y")));
+    });
+  });
+});
+
+describe("Assignment", () => {
+  it("assigns already known symbolic value", () => {
+    expect.assertions(1);
+    run(`let x = foo(); y = x; _inspect(x, y);`, (node, programState, inspectedSymbols) => {
       expect(programState.sv(inspectedSymbols.get("x"))).toBe(programState.sv(inspectedSymbols.get("y")));
     });
   });
