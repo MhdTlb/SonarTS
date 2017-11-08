@@ -17,33 +17,33 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
+import { join } from "path";
 import * as ts from "typescript";
 import * as tsutils from "tsutils";
 import { is } from "../../src/utils/navigation";
 import { parseString } from "../../src/utils/parser";
-import { SymbolicExecution, SECallback, ProgramState, LiteralSymbolicValue } from "../../src/se/SymbolicExecution";
-import { identifier } from "babel-types";
-import { join } from "path";
+import { SymbolicExecution, SECallback } from "../../src/se/SymbolicExecution";
+import { ProgramState } from "../../src/se/programStates";
 
 describe("Variable Declaration", () => {
   it("creates unknown symbolic value", () => {
     expect.assertions(1);
-    run(`let x = foo(); _inspect(x);`, (node, programState, inspectedSymbols) => {
-      expect(programState.sv(inspectedSymbols.get("x"))).toEqual({ type: "unknown" });
+    run(`let x = foo(); _inspect(x);`, (node, state, symbols) => {
+      expect(state.sv(symbols.get("x"))).toEqual({ type: "unknown" });
     });
   });
 
   it("creates literal symbolic value", () => {
     expect.assertions(1);
-    run(`let x = 0; _inspect(x);`, (node, programState, inspectedSymbols) => {
-      expect(programState.sv(inspectedSymbols.get("x"))).toEqual({ type: "literal", value: "0" });
+    run(`let x = 0; _inspect(x);`, (node, state, symbols) => {
+      expect(state.sv(symbols.get("x"))).toEqual({ type: "literal", value: "0" });
     });
   });
 
   it("initializes with already known symbolic value", () => {
     expect.assertions(1);
-    run(`let x = foo(); let y = x; _inspect(x, y);`, (node, programState, inspectedSymbols) => {
-      expect(programState.sv(inspectedSymbols.get("x"))).toBe(programState.sv(inspectedSymbols.get("y")));
+    run(`let x = foo(); let y = x; _inspect(x, y);`, (node, state, symbols) => {
+      expect(state.sv(symbols.get("x"))).toBe(state.sv(symbols.get("y")));
     });
   });
 });
@@ -51,8 +51,8 @@ describe("Variable Declaration", () => {
 describe("Assignment", () => {
   it("assigns already known symbolic value", () => {
     expect.assertions(1);
-    run(`let x = foo(); y = x; _inspect(x, y);`, (node, programState, inspectedSymbols) => {
-      expect(programState.sv(inspectedSymbols.get("x"))).toBe(programState.sv(inspectedSymbols.get("y")));
+    run(`let x = foo(); y = x; _inspect(x, y);`, (node, state, symbols) => {
+      expect(state.sv(symbols.get("x"))).toBe(state.sv(symbols.get("y")));
     });
   });
 });
@@ -69,22 +69,22 @@ function run(source: string, callback: SETestCallback) {
 
   const se = new SymbolicExecution(sourceFile.statements, program);
 
-  se.execute((node, programState) => {
+  se.execute((node, state) => {
     const map = isInspectNode(node, program);
     if (map) {
-      callback(node, programState, map);
+      callback(node, state, map);
     }
   });
 }
 
 function isInspectNode(node: ts.Node, program: ts.Program): Map<string, ts.Symbol> | undefined {
   if (tsutils.isCallExpression(node) && tsutils.isIdentifier(node.expression) && node.expression.text === "_inspect") {
-    const inspectedSymbols = new Map<string, ts.Symbol>();
+    const symbols = new Map<string, ts.Symbol>();
     const identifiers = node.arguments.filter(tsutils.isIdentifier);
     identifiers.forEach(identifier =>
-      inspectedSymbols.set(identifier.text, program.getTypeChecker().getSymbolAtLocation(identifier)),
+      symbols.set(identifier.text, program.getTypeChecker().getSymbolAtLocation(identifier)),
     );
-    return inspectedSymbols;
+    return symbols;
   }
   return undefined;
 }
