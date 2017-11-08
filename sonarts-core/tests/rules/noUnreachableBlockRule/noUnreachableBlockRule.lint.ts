@@ -76,9 +76,26 @@ function optionals(x?: {}) {
 class Foo {
   x: Foo;
 
-  public m() {
+  public ownProperty() {
     if (this.x) return 1;
   }
+
+  public interfaceProperty(foo: { bar: SomeInterface }) {
+    if (foo.bar.x) return 1;
+    //  ^^^^^^^^^ FN: This condition always evaluates to "true".
+  }
+
+  public classProperty(foo: { bar: SomeClass }) {
+    if (foo.bar.x) return 1;
+  }
+}
+
+interface SomeInterface {
+  x: {};
+}
+
+class SomeClass {
+  x: {};
 }
 
 function indexTypes(x: { [key: string]: {} }) {
@@ -95,7 +112,7 @@ function changeInCallback(arr: number[]) {
 }
 
 function dom() {
-  return (performance && performance.now) ? performance.now() : null
+  return performance && performance.now ? performance.now() : null;
 }
 
 function nullable(x: {}) {

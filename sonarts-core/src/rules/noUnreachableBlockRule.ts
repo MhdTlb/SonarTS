@@ -20,6 +20,7 @@
 import * as tslint from "tslint";
 import * as ts from "typescript";
 import { SonarRuleMetaData } from "../sonarRule";
+import { descendants, is } from "../utils/navigation";
 
 const { isTypeFlagSet } = tslint;
 
@@ -69,6 +70,12 @@ class Walker extends tslint.ProgramAwareRuleWalker {
 
   evaluateExpression(condition: ts.Expression): boolean | undefined {
     const type = this.getTypeChecker().getTypeAtLocation(condition);
+
+    // we know *nothing* about class properties
+    if (this.containsKind(condition, ts.SyntaxKind.PropertyAccessExpression)) {
+      return undefined;
+    }
+
     if (this.isAlwaysTruthy(type)) {
       return true;
     }
@@ -114,5 +121,9 @@ class Walker extends tslint.ProgramAwareRuleWalker {
 
   isLiteralType(type: ts.Type) {
     return isTypeFlagSet(type, ts.TypeFlags.Literal);
+  }
+
+  containsKind(condition: ts.Expression, kind: ts.SyntaxKind) {
+    return is(condition, kind) || descendants(condition).some(x => is(x, kind));
   }
 }
