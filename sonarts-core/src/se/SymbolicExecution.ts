@@ -42,13 +42,15 @@ export class SymbolicExecution {
   };
 
   private readonly executeProgramNode = (element: ts.Node, currentState: ProgramState): ProgramState => {
-    if (
-      tsutils.isVariableDeclaration(element) &&
-      element.initializer !== undefined &&
-      tsutils.isNumericLiteral(element.initializer)
-    ) {
+    if (tsutils.isVariableDeclaration(element)) {
       const symbol = this.program.getTypeChecker().getSymbolAtLocation(element.name);
-      const sv = createLiteralSymbolicValue(element.initializer.text);
+
+      if (element.initializer !== undefined && tsutils.isNumericLiteral(element.initializer)) {
+        const sv = createLiteralSymbolicValue(element.initializer.text);
+        return currentState.setSV(symbol, sv);
+      }
+
+      const sv = createUnknownSymbolicValue();
       return currentState.setSV(symbol, sv);
     }
     return currentState;
@@ -64,7 +66,11 @@ export interface LiteralSymbolicValue {
   value: string;
 }
 
-export type SymbolicValue = LiteralSymbolicValue;
+export interface UnknownSymbolicValue {
+  type: "unknown";
+}
+
+export type SymbolicValue = LiteralSymbolicValue | UnknownSymbolicValue;
 
 export class ProgramState {
   public static empty() {
@@ -91,4 +97,8 @@ export class ProgramState {
 
 function createLiteralSymbolicValue(value: string): LiteralSymbolicValue {
   return { type: "literal", value };
+}
+
+function createUnknownSymbolicValue(): UnknownSymbolicValue {
+  return { type: "unknown" };
 }

@@ -32,6 +32,13 @@ it("creates literal symbolic value", () => {
   });
 });
 
+it("creates unknown symbolic value", () => {
+  expect.assertions(1);
+  run(`let x = foo(); _inspect(x);`, (node, programState, inspectedSymbols) => {
+    expect(programState.sv(inspectedSymbols.get("x"))).toEqual({ type: "unknown" });
+  });
+});
+
 function run(source: string, callback: SETestCallback) {
   const filename = "filename.ts";
   const host: ts.CompilerHost = {
