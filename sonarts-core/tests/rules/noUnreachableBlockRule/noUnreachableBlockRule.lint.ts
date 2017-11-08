@@ -121,3 +121,8 @@ class SomeClass {
 // nullable(null);
 
 export default 1;
+
+function equality(x: {}) {
+  const y = x;
+  if (x == y) return 1;
+}
