@@ -42,6 +42,9 @@ export class SymbolicExecution {
       programState = this.executeProgramNode(element, programState);
       callback(element, programState);
     }
+    for (const successor of block.getSuccessors()) {
+      this.visitBlock(successor, programState, callback);
+    }
   };
 
   private readonly executeProgramNode = (element: ts.Node, state: ProgramState): ProgramState => {

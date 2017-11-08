@@ -57,11 +57,20 @@ describe("Assignment", () => {
   });
 });
 
+describe("Conditions", () => {
+  it("assigns already known symbolic value", () => {
+    expect.assertions(1);
+    run(`let x = foo(), y = bar(); if (x === y) { _inspect(x, y); }`, (node, state, symbols) => {
+      expect(state.sv(symbols.get("x"))).toBe(state.sv(symbols.get("y")));
+    });
+  });
+});
+
 function run(source: string, callback: SETestCallback) {
   const filename = "filename.ts";
   const host: ts.CompilerHost = {
     ...ts.createCompilerHost({ strict: true }),
-    getSourceFile: () => ts.createSourceFile(filename, source, ts.ScriptTarget.Latest),
+    getSourceFile: () => ts.createSourceFile(filename, source, ts.ScriptTarget.Latest, true),
     getCanonicalFileName: () => filename,
   };
   const program = ts.createProgram([], { strict: true }, host);
