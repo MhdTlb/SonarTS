@@ -80,6 +80,15 @@ describe("Assignment", () => {
   });
 });
 
+describe("Expressions", () => {
+  it("chain assignments", () => {
+    expect.assertions(1);
+    run(`let a; let b; a = b = 0; _inspect(a);`, (node, states, symbols) => {
+      expect(states[0].sv(symbols.get("a"))).toEqual({ type: "literal", value: "0" });
+    });
+  });
+});
+
 describe("Conditions", () => {
   it("track symbolic values across branches", () => {
     expect.assertions(2);
