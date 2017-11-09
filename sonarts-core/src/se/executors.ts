@@ -19,7 +19,7 @@
  */
 import * as ts from "typescript";
 import * as tsutils from "tsutils";
-import { createLiteralSymbolicValue, createUnknownSymbolicValue } from "./symbolicValues";
+import { createLiteralSymbolicValue, createUnknownSymbolicValue, createUndefinedSymbolicValue } from "./symbolicValues";
 import { ProgramState } from "./programStates";
 
 interface Executor {
@@ -27,46 +27,43 @@ interface Executor {
 }
 
 const variableDeclarationExecutor: Executor = (element, state, program) => {
-  if (tsutils.isVariableDeclaration(element)) {
-    const { getSymbolAtLocation } = program.getTypeChecker();
-    const symbol = getSymbolAtLocation(element.name);
-
-    if (element.initializer !== undefined && tsutils.isNumericLiteral(element.initializer)) {
-      const sv = createLiteralSymbolicValue(element.initializer.text);
-      return state.setSV(symbol, sv);
-    }
-
-    if (element.initializer !== undefined && tsutils.isIdentifier(element.initializer)) {
-      const initializerSymbol = getSymbolAtLocation(element.initializer);
-      const sv = state.sv(initializerSymbol);
-      return sv ? state.setSV(symbol, sv) : state;
-    }
-
-    const sv = createUnknownSymbolicValue();
-    return state.setSV(symbol, sv);
+  if (tsutils.isVariableDeclaration(element) && tsutils.isIdentifier(element.name)) {
+    return assign(element.name, element.initializer, state, program);
+  } else if (!!element.parent && tsutils.isVariableDeclaration(element.parent) && element.parent.name === element) {
+    return variableDeclarationExecutor(element.parent, state, program);
   }
-
   return state;
 };
 
-const binaryExpressionExecutor: Executor = (element, state, program) => {
+const assignmentExecutor: Executor = (element, state, program) => {
   if (
     tsutils.isBinaryExpression(element) &&
     element.operatorToken.kind === ts.SyntaxKind.EqualsToken &&
-    tsutils.isIdentifier(element.left) &&
-    tsutils.isIdentifier(element.right)
+    tsutils.isIdentifier(element.left)
   ) {
-    const { getSymbolAtLocation } = program.getTypeChecker();
-    const leftSymbol = getSymbolAtLocation(element.left);
-    const rightSymbol = getSymbolAtLocation(element.right);
-    const rightSV = state.sv(rightSymbol);
-    return rightSV ? state.setSV(leftSymbol, rightSV) : state;
+    return assign(element.left, element.right, state, program);
   }
 
   return state;
 };
 
-const EXECUTORS: Executor[] = [variableDeclarationExecutor, binaryExpressionExecutor];
+function assign(variableIdentifier: ts.Identifier, value: ts.Expression | undefined, state: ProgramState, program: ts.Program) {
+  const { getSymbolAtLocation } = program.getTypeChecker();
+  const variable = getSymbolAtLocation(variableIdentifier);
+  if (!value) {
+    return state.setSV(variable, createUndefinedSymbolicValue());
+  } else if (tsutils.isIdentifier(value)) {
+    const rightSymbol = getSymbolAtLocation(value);
+    const rightSV = state.sv(rightSymbol);
+    return rightSV ? state.setSV(variable, rightSV) : state;
+  } else if (tsutils.isNumericLiteral(value)) {
+    return state.setSV(variable, createLiteralSymbolicValue(value.text));
+  } else {
+    return state.setSV(variable, createUnknownSymbolicValue());
+  }
+}
+
+const EXECUTORS: Executor[] = [variableDeclarationExecutor, assignmentExecutor];
 
 /** Apply all executor. Only one must match. */
 export function applyExecutors(element: ts.Node, state: ProgramState, program: ts.Program): ProgramState {

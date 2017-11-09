@@ -26,6 +26,7 @@ import { ProgramState } from "./programStates";
 export class SymbolicExecution {
   private readonly cfg: ControlFlowGraph;
   private readonly program: ts.Program;
+  private readonly programNodes = new Map<ts.Node, Set<ProgramState>>();
 
   constructor(statements: ts.NodeArray<ts.Statement>, program: ts.Program) {
     this.cfg = buildCfg(statements)!;
@@ -34,24 +35,30 @@ export class SymbolicExecution {
 
   public execute(callback: SECallback) {
     const programState: ProgramState = ProgramState.empty();
-    this.visitBlock(this.cfg.start, programState, callback);
+    this.visitBlock(this.cfg.start, programState);
+    this.processCallbacks(callback);
   }
 
-  private readonly visitBlock = (block: CfgBlock, programState: ProgramState, callback: SECallback) => {
-    for (const element of block.getElements()) {
-      programState = this.executeProgramNode(element, programState);
-      callback(element, programState);
+  private readonly visitBlock = (block: CfgBlock, programState: ProgramState) => {
+    for (const programPoint of block.getElements()) {
+      programState = applyExecutors(programPoint, programState, this.program);
+      if (!this.programNodes.has(programPoint)) {
+        this.programNodes.set(programPoint, new Set());
+      }
+      this.programNodes.get(programPoint)!.add(programState);
     }
     for (const successor of block.getSuccessors()) {
-      this.visitBlock(successor, programState, callback);
+      this.visitBlock(successor, programState);
     }
   };
 
-  private readonly executeProgramNode = (element: ts.Node, state: ProgramState): ProgramState => {
-    return applyExecutors(element, state, this.program);
-  };
+  private readonly processCallbacks= (...callbacks: SECallback[]) => {
+    this.programNodes.forEach((programStates, programPoint) => {
+      callbacks.forEach(callback => callback(programPoint, [...programStates]));
+    });
+  }
 }
 
 export interface SECallback {
-  (node: ts.Node, programState: ProgramState): void;
+  (node: ts.Node, programStates: ProgramState[]): void;
 }

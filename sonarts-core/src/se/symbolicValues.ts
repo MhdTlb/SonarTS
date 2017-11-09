@@ -30,10 +30,18 @@ export interface UnknownSymbolicValue extends SymbolicValue {
   type: "unknown";
 }
 
+export interface UndefinedSymbolicValue extends SymbolicValue {
+  type: "undefined";
+}
+
 export function createLiteralSymbolicValue(value: string): LiteralSymbolicValue {
   return { type: "literal", value };
 }
 
 export function createUnknownSymbolicValue(): UnknownSymbolicValue {
   return { type: "unknown" };
+}
+
+export function createUndefinedSymbolicValue(): UndefinedSymbolicValue {
+  return { type: "undefined"};
 }

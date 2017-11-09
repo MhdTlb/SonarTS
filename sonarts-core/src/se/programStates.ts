@@ -19,6 +19,7 @@
  */
 import * as ts from "typescript";
 import { SymbolicValue } from "./symbolicValues";
+import { inspect } from "util";
 
 export class ProgramState {
   public static empty() {
@@ -31,14 +32,22 @@ export class ProgramState {
     this.symbolicValues = symbolicValues;
   }
 
-  sv = (symbol: ts.Symbol): SymbolicValue | undefined => {
+  readonly sv = (symbol: ts.Symbol): SymbolicValue | undefined => {
     return this.symbolicValues.get(symbol);
   };
 
-  setSV = (symbol: ts.Symbol, sv: SymbolicValue) => {
+  readonly setSV = (symbol: ts.Symbol, sv: SymbolicValue) => {
     const newSymbolicValues = new Map<ts.Symbol, SymbolicValue>();
     this.symbolicValues.forEach((value, key) => newSymbolicValues.set(key, value));
     newSymbolicValues.set(symbol, sv);
     return new ProgramState(newSymbolicValues);
   };
+
+  public toString(): string {
+    const prettyEntries = new Map<string, SymbolicValue>();
+    this.symbolicValues.forEach((value, key) => {
+      prettyEntries.set(key.name, value);
+    });
+    return inspect(prettyEntries);
+  }
 }

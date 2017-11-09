@@ -24,44 +24,68 @@ import { is } from "../../src/utils/navigation";
 import { parseString } from "../../src/utils/parser";
 import { SymbolicExecution, SECallback } from "../../src/se/SymbolicExecution";
 import { ProgramState } from "../../src/se/programStates";
+import { isEqual } from "lodash";
 
 describe("Variable Declaration", () => {
   it("creates unknown symbolic value", () => {
     expect.assertions(1);
-    run(`let x = foo(); _inspect(x);`, (node, state, symbols) => {
-      expect(state.sv(symbols.get("x"))).toEqual({ type: "unknown" });
+    run(`let x = foo(); _inspect(x);`, (node, states, symbols) => {
+      expect(states[0].sv(symbols.get("x"))).toEqual({ type: "unknown" });
     });
   });
 
   it("creates literal symbolic value", () => {
     expect.assertions(1);
-    run(`let x = 0; _inspect(x);`, (node, state, symbols) => {
-      expect(state.sv(symbols.get("x"))).toEqual({ type: "literal", value: "0" });
+    run(`let x = 0; _inspect(x);`, (node, states, symbols) => {
+      expect(states[0].sv(symbols.get("x"))).toEqual({ type: "literal", value: "0" });
+    });
+  });
+
+  it("initializes with undefined", () => {
+    expect.assertions(1);
+    run(`let x; _inspect(x);`, (node, states, symbols) => {
+      expect(states[0].sv(symbols.get("x"))).toEqual({ type: "undefined"});
     });
   });
 
   it("initializes with already known symbolic value", () => {
     expect.assertions(1);
-    run(`let x = foo(); let y = x; _inspect(x, y);`, (node, state, symbols) => {
-      expect(state.sv(symbols.get("x"))).toBe(state.sv(symbols.get("y")));
+    run(`let x = foo(); let y = x; _inspect(x, y);`, (node, states, symbols) => {
+      expect(states[0].sv(symbols.get("x"))).toBe(states[0].sv(symbols.get("y")));
     });
   });
+
 });
 
 describe("Assignment", () => {
   it("assigns already known symbolic value", () => {
     expect.assertions(1);
-    run(`let x = foo(); y = x; _inspect(x, y);`, (node, state, symbols) => {
-      expect(state.sv(symbols.get("x"))).toBe(state.sv(symbols.get("y")));
+    run(`let x = foo(); y = x; _inspect(x, y);`, (node, states, symbols) => {
+      expect(states[0].sv(symbols.get("x"))).toBe(states[0].sv(symbols.get("y")));
+    });
+  });
+
+  it("assigns literal symbolic value", () => {
+    expect.assertions(1);
+    run(`let x = foo(); x = 0; _inspect(x);`, (node, states, symbols) => {
+      expect(states[0].sv(symbols.get("x"))).toEqual({ type: "literal", value: "0" });
+    });
+  });
+
+  it("assigns unknown symbolic value", () => {
+    expect.assertions(1);
+    run(`let x; x = foo(); _inspect(x);`, (node, states, symbols) => {
+      expect(states[0].sv(symbols.get("x"))).toEqual({ type: "unknown" });
     });
   });
 });
 
 describe("Conditions", () => {
-  it("assigns already known symbolic value", () => {
-    expect.assertions(1);
-    run(`let x = foo(), y = bar(); if (x === y) { _inspect(x, y); }`, (node, state, symbols) => {
-      expect(state.sv(symbols.get("x"))).toBe(state.sv(symbols.get("y")));
+  it("track symbolic values across branches", () => {
+    expect.assertions(2);
+    run(`let x = 0; if(cond) { x = 1; } _inspect(x);`, (node, states, symbols) => {
+      expect(states.find(state => isEqual(state.sv(symbols.get("x")), { type: "literal", value: "0" }))).toBeTruthy();
+      expect(states.find(state => isEqual(state.sv(symbols.get("x")), { type: "literal", value: "1" }))).toBeTruthy();
     });
   });
 });
@@ -99,5 +123,5 @@ function isInspectNode(node: ts.Node, program: ts.Program): Map<string, ts.Symbo
 }
 
 interface SETestCallback {
-  (node: ts.Node, programState: ProgramState, inspectedSymbos: Map<string, ts.Symbol>): void;
+  (node: ts.Node, programStates: ProgramState[], inspectedSymbos: Map<string, ts.Symbol>): void;
 }
