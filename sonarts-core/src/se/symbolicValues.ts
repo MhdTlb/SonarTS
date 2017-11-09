@@ -43,5 +43,5 @@ export function createUnknownSymbolicValue(): UnknownSymbolicValue {
 }
 
 export function createUndefinedSymbolicValue(): UndefinedSymbolicValue {
-  return { type: "undefined"};
+  return { type: "undefined" };
 }

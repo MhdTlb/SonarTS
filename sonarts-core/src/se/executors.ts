@@ -47,7 +47,12 @@ const assignmentExecutor: Executor = (element, state, program) => {
   return state;
 };
 
-function assign(variableIdentifier: ts.Identifier, value: ts.Expression | undefined, state: ProgramState, program: ts.Program) {
+function assign(
+  variableIdentifier: ts.Identifier,
+  value: ts.Expression | undefined,
+  state: ProgramState,
+  program: ts.Program,
+) {
   const { getSymbolAtLocation } = program.getTypeChecker();
   const variable = getSymbolAtLocation(variableIdentifier);
   if (!value) {

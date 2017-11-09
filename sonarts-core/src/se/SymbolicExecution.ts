@@ -52,11 +52,11 @@ export class SymbolicExecution {
     }
   };
 
-  private readonly processCallbacks= (...callbacks: SECallback[]) => {
+  private readonly processCallbacks = (...callbacks: SECallback[]) => {
     this.programNodes.forEach((programStates, programPoint) => {
       callbacks.forEach(callback => callback(programPoint, [...programStates]));
     });
-  }
+  };
 }
 
 export interface SECallback {

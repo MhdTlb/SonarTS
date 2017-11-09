@@ -44,7 +44,7 @@ describe("Variable Declaration", () => {
   it("initializes with undefined", () => {
     expect.assertions(1);
     run(`let x; _inspect(x);`, (node, states, symbols) => {
-      expect(states[0].sv(symbols.get("x"))).toEqual({ type: "undefined"});
+      expect(states[0].sv(symbols.get("x"))).toEqual({ type: "undefined" });
     });
   });
 
@@ -54,7 +54,6 @@ describe("Variable Declaration", () => {
       expect(states[0].sv(symbols.get("x"))).toBe(states[0].sv(symbols.get("y")));
     });
   });
-
 });
 
 describe("Assignment", () => {
