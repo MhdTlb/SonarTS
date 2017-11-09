@@ -91,7 +91,7 @@ describe("Expressions", () => {
 describe("Conditions", () => {
   it("tracks symbolic values across branches", () => {
     expect.assertions(2);
-    run(`let x = 0; if(cond) { x = 1; } _inspect(x);`, (node, states, symbols) => {
+    run(`let x = 0; if (cond) { x = 1; } _inspect(x);`, (node, states, symbols) => {
       expect(states.find(state => isEqual(state.sv(symbols.get("x")), { type: "literal", value: "0" }))).toBeTruthy();
       expect(states.find(state => isEqual(state.sv(symbols.get("x")), { type: "literal", value: "1" }))).toBeTruthy();
     });

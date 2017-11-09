@@ -19,8 +19,10 @@
  */
 import * as tslint from "tslint";
 import * as ts from "typescript";
+import * as tsutils from "tsutils";
 import { SonarRuleMetaData } from "../sonarRule";
 import { descendants, is } from "../utils/navigation";
+import { SymbolicExecution } from "../se/SymbolicExecution";
 
 const { isTypeFlagSet } = tslint;
 
@@ -51,6 +53,32 @@ export class Rule extends tslint.Rules.TypedRule {
 
 class Walker extends tslint.ProgramAwareRuleWalker {
   private readonly FALSY_VALUES = ['""', "false", "0"];
+
+  protected visitFunctionDeclaration(node: ts.FunctionDeclaration) {
+    const { body } = node;
+    if (body) {
+      const se = new SymbolicExecution(body.statements, this.getProgram());
+      se.execute((node, programStates) => {
+        if (
+          tsutils.isBinaryExpression(node) &&
+          node.operatorToken.kind === ts.SyntaxKind.EqualsEqualsEqualsToken &&
+          tsutils.isIdentifier(node.left) &&
+          tsutils.isIdentifier(node.right)
+        ) {
+          const leftSymbol = this.getProgram()
+            .getTypeChecker()
+            .getSymbolAtLocation(node.left);
+          const rightSymbol = this.getProgram()
+            .getTypeChecker()
+            .getSymbolAtLocation(node.right);
+          if (programStates.every(programState => programState.sv(leftSymbol) === programState.sv(rightSymbol))) {
+            this.addFailureAtNode(node, Rule.getMessage("true"));
+          }
+        }
+      });
+    }
+    super.visitFunctionDeclaration(node);
+  }
 
   protected visitIfStatement(ifStatement: ts.IfStatement) {
     const result = this.evaluateExpression(ifStatement.expression);

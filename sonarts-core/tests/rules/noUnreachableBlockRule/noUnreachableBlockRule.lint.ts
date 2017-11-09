@@ -122,7 +122,9 @@ class SomeClass {
 
 export default 1;
 
-function equality(x: {}) {
+function equality() {
+  let x = foo();
   const y = x;
-  if (x == y) return 1;
+  if (x === y) return 1;
+  //  ^^^^^^^ {{This condition always evaluates to "true".}}
 }
