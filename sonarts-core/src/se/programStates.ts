@@ -21,29 +21,47 @@ import * as ts from "typescript";
 import { SymbolicValue } from "./symbolicValues";
 import { inspect } from "util";
 
+type SymbolicValues = Map<ts.Symbol, SymbolicValue>;
+type ExpressionStack = SymbolicValue[];
+
 export class ProgramState {
+  private readonly symbolicValues: SymbolicValues;
+  private readonly expressionStack: ExpressionStack;
+
   public static empty() {
-    return new ProgramState(new Map());
+    return new ProgramState(new Map(), []);
   }
 
-  private readonly symbolicValues = new Map<ts.Symbol, SymbolicValue>();
-
-  private constructor(symbolicValues: Map<ts.Symbol, SymbolicValue>) {
+  private constructor(symbolicValues: SymbolicValues, expressionStack: ExpressionStack) {
     this.symbolicValues = symbolicValues;
+    this.expressionStack = expressionStack;
   }
 
-  readonly sv = (symbol: ts.Symbol): SymbolicValue | undefined => {
+  sv(symbol: ts.Symbol): SymbolicValue | undefined {
     return this.symbolicValues.get(symbol);
-  };
+  }
 
-  readonly setSV = (symbol: ts.Symbol, sv: SymbolicValue) => {
-    const newSymbolicValues = new Map<ts.Symbol, SymbolicValue>();
-    this.symbolicValues.forEach((value, key) => newSymbolicValues.set(key, value));
+  setSV(symbol: ts.Symbol, sv: SymbolicValue) {
+    const newSymbolicValues = new Map(this.symbolicValues);
     newSymbolicValues.set(symbol, sv);
-    return new ProgramState(newSymbolicValues);
-  };
+    return new ProgramState(newSymbolicValues, this.expressionStack);
+  }
 
-  public toString(): string {
+  pushSV(sv: SymbolicValue): ProgramState {
+    const newExpressionStack = [...this.expressionStack, sv];
+    return new ProgramState(this.symbolicValues, newExpressionStack);
+  }
+
+  popSV(): [SymbolicValue, ProgramState] {
+    const newExpressionStack = [...this.expressionStack];
+    const sv = newExpressionStack.pop();
+    if (!sv) {
+      throw new Error("Nothing in the expression stack");
+    }
+    return [sv, new ProgramState(this.symbolicValues, newExpressionStack)];
+  }
+
+  toString() {
     const prettyEntries = new Map<string, SymbolicValue>();
     this.symbolicValues.forEach((value, key) => {
       prettyEntries.set(key.name, value);
